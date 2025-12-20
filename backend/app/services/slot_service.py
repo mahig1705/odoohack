@@ -12,15 +12,41 @@ def generate_slots(db: Session, appointment_type_id, slot_date):
     if not appointment:
         raise Exception("Appointment type not found")
 
-    weekday = slot_date.weekday()
+    # Check if slots already exist for this date
+    existing_slots = db.query(Slot).filter(
+        Slot.appointment_type_id == appointment_type_id,
+        Slot.slot_date == slot_date
+    ).count()
 
-    working_hours = db.query(WorkingHours).filter(
-        WorkingHours.appointment_type_id == appointment_type_id,
-        WorkingHours.weekday == weekday
+    if existing_slots > 0:
+        # Slots already exist, return without creating duplicates
+        return
+
+    weekday = slot_date.weekday()
+    
+    # Get all working hours for this appointment to provide better error messages
+    all_working_hours = db.query(WorkingHours).filter(
+        WorkingHours.appointment_type_id == appointment_type_id
     ).all()
+    
+    # Find working hours for the specific weekday
+    working_hours = [wh for wh in all_working_hours if wh.weekday == weekday]
 
     if not working_hours:
-        raise Exception("No working hours defined for this day")
+        # Provide helpful error message with available weekdays
+        weekday_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        selected_weekday_name = weekday_names[weekday]
+        available_weekdays = sorted(set(wh.weekday for wh in all_working_hours))
+        available_names = [weekday_names[d] for d in available_weekdays] if available_weekdays else []
+        
+        if not all_working_hours:
+            raise Exception(f"No working hours defined for this appointment type. Please set up working hours first.")
+        else:
+            available_str = ", ".join(available_names) if available_names else "none"
+            raise Exception(
+                f"No working hours defined for {selected_weekday_name} (weekday {weekday}). "
+                f"Available days: {available_str}. Please add working hours for {selected_weekday_name}."
+            )
 
     for wh in working_hours:
         start = datetime.combine(slot_date, wh.start_time)

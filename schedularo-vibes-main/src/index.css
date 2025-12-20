@@ -1,0 +1,398 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Core palette - Cream & Orange with Navy accents */
+    --background: 40 33% 98%;
+    --foreground: 220 20% 10%;
+    
+    --card: 40 25% 96%;
+    --card-foreground: 220 20% 10%;
+    
+    --popover: 40 33% 98%;
+    --popover-foreground: 220 20% 10%;
+    
+    /* Primary - Bold Orange */
+    --primary: 16 100% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 16 100% 70%;
+    
+    /* Secondary - Deep Navy */
+    --secondary: 220 60% 15%;
+    --secondary-foreground: 40 33% 98%;
+    
+    /* Muted - Soft cream */
+    --muted: 40 20% 94%;
+    --muted-foreground: 220 10% 45%;
+    
+    /* Accent - Teal/Cyan */
+    --accent: 175 70% 45%;
+    --accent-foreground: 0 0% 100%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 16 100% 60%;
+    
+    --radius: 0.75rem;
+    
+    /* Custom colors */
+    --cream: 40 33% 98%;
+    --cream-dark: 40 25% 94%;
+    --navy: 220 60% 15%;
+    --navy-light: 220 40% 25%;
+    --orange: 16 100% 60%;
+    --orange-light: 16 100% 70%;
+    --orange-dark: 16 100% 50%;
+    --teal: 175 70% 45%;
+    --teal-light: 175 60% 55%;
+    
+    /* Doodle stroke */
+    --doodle-stroke: 220 20% 10%;
+    --doodle-fill: 16 100% 60%;
+    
+    /* Shadows */
+    --shadow-sm: 0 2px 8px -2px hsl(220 60% 15% / 0.08);
+    --shadow-md: 0 8px 24px -8px hsl(220 60% 15% / 0.12);
+    --shadow-lg: 0 16px 48px -12px hsl(220 60% 15% / 0.15);
+    --shadow-glow: 0 0 40px hsl(16 100% 60% / 0.3);
+    
+    /* Sidebar */
+    --sidebar-background: 40 25% 96%;
+    --sidebar-foreground: 220 20% 10%;
+    --sidebar-primary: 16 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 175 70% 45%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 40 15% 88%;
+    --sidebar-ring: 16 100% 60%;
+  }
+
+  .dark {
+    /* Dark mode - Deep Navy with Orange accents */
+    --background: 220 60% 8%;
+    --foreground: 40 33% 95%;
+    
+    --card: 220 50% 12%;
+    --card-foreground: 40 33% 95%;
+    
+    --popover: 220 50% 12%;
+    --popover-foreground: 40 33% 95%;
+    
+    --primary: 16 100% 60%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 16 100% 70%;
+    
+    --secondary: 220 40% 20%;
+    --secondary-foreground: 40 33% 95%;
+    
+    --muted: 220 40% 16%;
+    --muted-foreground: 220 15% 60%;
+    
+    --accent: 175 70% 45%;
+    --accent-foreground: 0 0% 100%;
+    
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 220 40% 20%;
+    --input: 220 40% 20%;
+    --ring: 16 100% 60%;
+    
+    /* Custom colors dark */
+    --cream: 220 60% 8%;
+    --cream-dark: 220 50% 12%;
+    --navy: 220 60% 8%;
+    --navy-light: 220 40% 16%;
+    --doodle-stroke: 40 33% 95%;
+    --doodle-fill: 16 100% 60%;
+    
+    --shadow-sm: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
+    --shadow-md: 0 8px 24px -8px hsl(0 0% 0% / 0.4);
+    --shadow-lg: 0 16px 48px -12px hsl(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 60px hsl(16 100% 60% / 0.4);
+    
+    --sidebar-background: 220 50% 12%;
+    --sidebar-foreground: 40 33% 95%;
+    --sidebar-primary: 16 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 175 70% 45%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 40% 20%;
+    --sidebar-ring: 16 100% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  /* Doodle underline animation */
+  .doodle-underline {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .doodle-underline::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10'%3E%3Cpath d='M0 5 Q25 0 50 5 T100 5' stroke='%23FF6B35' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") repeat-x;
+    background-size: 100px 10px;
+    animation: doodle-draw 0.6s ease-out forwards;
+  }
+  
+  /* Doodle circle highlight */
+  .doodle-circle {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .doodle-circle::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: -12px;
+    right: -12px;
+    bottom: -8px;
+    border: 3px solid hsl(var(--primary));
+    border-radius: 50% 45% 55% 48%;
+    animation: wiggle 3s ease-in-out infinite;
+  }
+  
+  /* Scribble effect */
+  .scribble-bg {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg stroke='%23FF6B35' stroke-opacity='0.08' stroke-width='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  
+  /* Card hover with doodle border */
+  .doodle-card {
+    @apply relative overflow-hidden transition-all duration-300;
+  }
+  
+  .doodle-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 3px solid transparent;
+    border-radius: inherit;
+    transition: border-color 0.3s ease;
+  }
+  
+  .doodle-card:hover::before {
+    border-color: hsl(var(--primary));
+    border-radius: 45% 55% 50% 50% / 55% 45% 55% 45%;
+    animation: morph-border 2s ease-in-out infinite;
+  }
+  
+  /* Button variants */
+  .btn-doodle {
+    @apply relative inline-flex items-center justify-center px-8 py-4 font-display font-bold text-lg transition-all duration-200;
+  }
+  
+  .btn-doodle::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    background: hsl(var(--primary));
+    border-radius: 55% 45% 50% 50% / 50% 55% 45% 50%;
+    z-index: -1;
+    transition: transform 0.2s ease;
+  }
+  
+  .btn-doodle:hover::before {
+    transform: scale(1.05);
+    animation: wiggle 0.5s ease-in-out;
+  }
+  
+  /* Text gradient */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary;
+  }
+  
+  /* Floating animation */
+  .float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .float-delayed {
+    animation: float 6s ease-in-out infinite;
+    animation-delay: -3s;
+  }
+  
+  /* Wiggle animation for doodles */
+  .wiggle {
+    animation: wiggle 2s ease-in-out infinite;
+  }
+  
+  /* Bounce subtle */
+  .bounce-subtle {
+    animation: bounce-subtle 2s ease-in-out infinite;
+  }
+  
+  /* Scroll indicator */
+  .scroll-indicator {
+    animation: scroll-bounce 2s ease-in-out infinite;
+  }
+}
+
+@layer utilities {
+  /* Glass effect */
+  .glass {
+    @apply backdrop-blur-md bg-background/80;
+  }
+  
+  /* Noise texture overlay */
+  .noise {
+    position: relative;
+  }
+  
+  .noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+  }
+}
+
+/* Keyframe animations */
+@keyframes doodle-draw {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(-1deg) scale(1);
+  }
+  25% {
+    transform: rotate(1deg) scale(1.02);
+  }
+  50% {
+    transform: rotate(-0.5deg) scale(1);
+  }
+  75% {
+    transform: rotate(0.5deg) scale(1.01);
+  }
+}
+
+@keyframes morph-border {
+  0%, 100% {
+    border-radius: 45% 55% 50% 50% / 55% 45% 55% 45%;
+  }
+  25% {
+    border-radius: 55% 45% 55% 45% / 45% 55% 45% 55%;
+  }
+  50% {
+    border-radius: 50% 50% 45% 55% / 55% 45% 50% 50%;
+  }
+  75% {
+    border-radius: 45% 55% 55% 45% / 50% 50% 55% 45%;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+  66% {
+    transform: translateY(5px) rotate(-1deg);
+  }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes scroll-bounce {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(10px);
+    opacity: 0.5;
+  }
+}
+
+@keyframes stroke-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px hsl(var(--primary) / 0.5);
+  }
+}

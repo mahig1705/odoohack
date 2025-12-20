@@ -29,7 +29,7 @@ def create(
     return create_appointment_type(db, data, current_user.id)
 
 
-@router.post("/{appointment_id}/publish")
+@router.post("/{appointment_id}/publish", response_model=AppointmentTypeResponse)
 def publish(
     appointment_id: UUID,
     db: Session = Depends(get_db),
@@ -41,10 +41,20 @@ def publish(
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
 
-    return {"message": "Appointment type published"}
+    return appointment
 
 @router.get("/public", response_model=list[AppointmentTypeResponse])
 def list_published(db: Session = Depends(get_db)):
     return db.query(AppointmentType).filter(
         AppointmentType.is_published == True
     ).all()
+
+@router.get("/my", response_model=list[AppointmentTypeResponse])
+def list_my_appointments(
+    current_user: User = Depends(require_roles("ORGANISER", "ADMIN")),
+    db: Session = Depends(get_db)
+):
+    """Get all appointment types created by the current organizer"""
+    return db.query(AppointmentType).filter(
+        AppointmentType.created_by == current_user.id
+    ).order_by(AppointmentType.created_at.desc()).all()

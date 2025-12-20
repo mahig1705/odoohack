@@ -12,9 +12,20 @@ from app.services.resource_service import (
 )
 from app.dependencies.auth import get_current_user
 from app.models.user import User
+from app.models.resource import Resource
 from app.dependencies.roles import require_roles
 
 router = APIRouter(prefix="/resources", tags=["Resources"])
+
+@router.get("/my", response_model=list[ResourceResponse])
+def list_my_resources(
+    current_user: User = Depends(require_roles("ORGANISER", "ADMIN")),
+    db: Session = Depends(get_db)
+):
+    """Get all resources created by the current organizer"""
+    return db.query(Resource).filter(
+        Resource.created_by == current_user.id
+    ).order_by(Resource.id.desc()).all()
 
 @router.post("/", response_model=ResourceResponse)
 def create(

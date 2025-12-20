@@ -29,7 +29,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",  # Next.js
-        "http://localhost:8080",  # Your request
+        "http://localhost:8080",
+        "http://localhost:8081",  # Your request
     ],
     allow_credentials=True,
     allow_methods=["*"],

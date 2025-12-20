@@ -25,6 +25,8 @@ def publish_appointment_type(db: Session, appointment_id, user_id):
     if not appointment:
         return None
 
-    appointment.is_published = True
+    # Toggle publish status
+    appointment.is_published = not appointment.is_published
     db.commit()
+    db.refresh(appointment)
     return appointment
