@@ -1,21 +1,15 @@
-const BASE_URL = "http://127.0.0.1:8000";
+import axios from "axios";
 
-export async function signup(email: string, password: string) {
-  const res = await fetch(`${BASE_URL}/auth/signup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+const API = axios.create({
+  baseURL: "http://127.0.0.1:8000",
+});
 
-  return res.json();
-}
+export const signup = async (email: string, password: string) => {
+  const res = await API.post("/auth/signup", { email, password });
+  return res.data;
+};
 
-export async function login(email: string, password: string) {
-  const res = await fetch(`${BASE_URL}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
-
-  return res.json();
-}
+export const login = async (email: string, password: string) => {
+  const res = await API.post("/auth/login", { email, password });
+  return res.data;
+};
