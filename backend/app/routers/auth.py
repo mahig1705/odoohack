@@ -17,19 +17,38 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
     generate_and_send_otp(db, user.id, user.email)
     return {"message": "User registered. OTP sent to email."}
 
+from app.models.user import User
+
+from app.models.user import User
+
 @router.post("/verify-otp")
 def verify_otp(data: OTPVerifyRequest, db: Session = Depends(get_db)):
+    # 1️⃣ Find OTP record
     otp = db.query(OTPVerification).filter(
         OTPVerification.otp_code == data.otp,
         OTPVerification.verified == False
     ).first()
 
     if not otp or otp.expires_at < datetime.utcnow():
-        raise HTTPException(400, "Invalid or expired OTP")
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
 
+    # 2️⃣ Mark OTP as verified
     otp.verified = True
+
+    # 3️⃣ Fetch user using otp.user_id
+    user = db.query(User).filter(User.id == otp.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # 4️⃣ Mark user as verified
+    user.is_verified = True
+
     db.commit()
+
     return {"message": "Email verified successfully"}
+
+
 
 @router.post("/login", response_model=TokenResponse)
 def login(data: LoginRequest, db: Session = Depends(get_db)):

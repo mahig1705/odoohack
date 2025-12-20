@@ -2,6 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.models.appointment import Appointment
 from app.models.slot import Slot
+from app.services.appointment_status_service import log_status_change
+
 
 def cancel_appointment(db: Session, appointment_id, user_id):
     appointment = db.execute(
@@ -30,6 +32,14 @@ def cancel_appointment(db: Session, appointment_id, user_id):
     if slot.booked_capacity < slot.max_capacity:
         slot.status = "OPEN"
 
+    old_status = appointment.status      
     appointment.status = "CANCELLED"
 
     db.commit()
+    log_status_change(
+        db=db,
+        appointment_id=appointment.id,
+        old_status=old_status,
+        new_status="CANCELLED",
+        user_id=user_id
+    )

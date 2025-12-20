@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 from app.models.slot import Slot
 from app.models.appointment import Appointment
+from app.services.appointment_status_service import log_status_change
+
 
 def create_booking(db: Session, user_id, data):
     slot = db.execute(
@@ -30,11 +32,20 @@ def create_booking(db: Session, user_id, data):
         appointment_type_id=slot.appointment_type_id,
         slot_id=slot.id,
         people_count=data.people_count,
+        status="BOOKED",
         created_at=datetime.utcnow()
     )
 
     db.add(appointment)
     db.commit()
     db.refresh(appointment)
+
+    log_status_change(
+        db=db,
+        appointment_id=appointment.id,
+        old_status="NEW",
+        new_status="BOOKED",
+        user_id=user_id
+    )
 
     return appointment

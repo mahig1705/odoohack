@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Boolean
+from sqlalchemy import Column, String, Boolean, TIMESTAMP
 from sqlalchemy.dialects.postgresql import UUID
 from app.database import Base
 
@@ -11,3 +11,6 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
+    is_verified = Column(Boolean, default=False) 
+    created_at = Column(TIMESTAMP)
+    updated_at = Column(TIMESTAMP)
