@@ -6,11 +6,13 @@ from app.models.user import User
 from app.core.security import hash_password, verify_password
 
 
-def create_user(db: Session, full_name: str, email: str, password: str):
+def create_user(db: Session, full_name: str, email: str, password: str, role_intent="CUSTOMER"):
     user = User(
         full_name=full_name,
         email=email,
-        password_hash=hash_password(password)
+        password_hash=hash_password(password),
+        is_verified=False,
+        requested_role=role_intent
     )
 
     db.add(user)

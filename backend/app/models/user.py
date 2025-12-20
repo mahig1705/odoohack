@@ -14,3 +14,4 @@ class User(Base):
     is_verified = Column(Boolean, default=False) 
     created_at = Column(TIMESTAMP)
     updated_at = Column(TIMESTAMP)
+    requested_role = Column(String(50), nullable=True)
