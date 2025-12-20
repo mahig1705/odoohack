@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.appointment_answer import AppointmentAnswerCreate
 from app.services.appointment_answer_service import submit_answer
-from app.dependencies.auth import get_current_user
+from app.dependencies.roles import require_roles
 
 router = APIRouter(prefix="/appointment-answers", tags=["Appointment Answers"])
 
@@ -11,7 +11,7 @@ router = APIRouter(prefix="/appointment-answers", tags=["Appointment Answers"])
 def submit(
     data: AppointmentAnswerCreate,
     db: Session = Depends(get_db),
-    _=Depends(get_current_user)
+    _=Depends(require_roles("CUSTOMER"))
 ):
     submit_answer(db, data)
     return {"message": "Answer saved"}

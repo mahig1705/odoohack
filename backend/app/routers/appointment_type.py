@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from uuid import UUID
+from app.dependencies.roles import require_roles
 
 from app.database import get_db
 from app.schemas.appointment_type import (
@@ -22,7 +23,8 @@ router = APIRouter(prefix="/appointment-types", tags=["Appointment Types"])
 def create(
     data: AppointmentTypeCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles("ORGANISER", "ADMIN"))
+
 ):
     return create_appointment_type(db, data, current_user.id)
 
@@ -31,7 +33,8 @@ def create(
 def publish(
     appointment_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles("ORGANISER", "ADMIN"))
+
 ):
     appointment = publish_appointment_type(db, appointment_id, current_user.id)
 

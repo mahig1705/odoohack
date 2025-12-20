@@ -5,6 +5,8 @@ from app.schemas.booking import BookingCreate
 from app.services.booking_service import create_booking
 from app.dependencies.auth import get_current_user
 from app.models.user import User
+from app.dependencies.roles import require_roles
+
 
 router = APIRouter(prefix="/bookings", tags=["Bookings"])
 
@@ -12,7 +14,8 @@ router = APIRouter(prefix="/bookings", tags=["Bookings"])
 def book_slot(
     data: BookingCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_roles("CUSTOMER"))
+
 ):
     try:
         appointment = create_booking(db, current_user.id, data)
