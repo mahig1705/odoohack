@@ -6,6 +6,8 @@ from app.services.auth_service import create_user, authenticate_user
 from app.services.otp_service import generate_and_send_otp
 from app.models.otp import OTPVerification
 from datetime import datetime
+from app.core.security import create_access_token
+from app.schemas.token import TokenResponse
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -29,9 +31,18 @@ def verify_otp(data: OTPVerifyRequest, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Email verified successfully"}
 
-@router.post("/login")
+@router.post("/login", response_model=TokenResponse)
 def login(data: LoginRequest, db: Session = Depends(get_db)):
     user = authenticate_user(db, data.email, data.password)
+
     if not user:
-        raise HTTPException(401, "Invalid credentials")
-    return {"message": "Login successful"}
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    access_token = create_access_token(
+        data={"sub": str(user.id)}
+    )
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer"
+    }
