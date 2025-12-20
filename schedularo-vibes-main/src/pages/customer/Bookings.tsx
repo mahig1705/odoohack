@@ -63,12 +63,12 @@ const CustomerBookings = () => {
   };
 
   const upcomingBookings = bookings.filter(b => 
-    (b.status === "CONFIRMED" || b.status === "PENDING") && 
+    (b.status === "CONFIRMED" || b.status === "PENDING" || b.status === "BOOKED") && 
     new Date(b.slot_date) >= new Date()
   );
   
   const pastBookings = bookings.filter(b => 
-    b.status === "COMPLETED" || new Date(b.slot_date) < new Date()
+    (b.status === "COMPLETED" || (new Date(b.slot_date) < new Date() && b.status !== "CANCELLED"))
   );
   
   const cancelledBookings = bookings.filter(b => b.status === "CANCELLED");
@@ -103,13 +103,14 @@ const CustomerBookings = () => {
           <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${
             booking.status === "CONFIRMED" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
             booking.status === "PENDING" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+            booking.status === "BOOKED" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
             booking.status === "CANCELLED" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
-            booking.status === "COMPLETED" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+            booking.status === "COMPLETED" ? "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400" :
             "bg-secondary text-secondary-foreground"
           }`}>
             {booking.status.toLowerCase()}
           </span>
-          {showCancel && (booking.status === "CONFIRMED" || booking.status === "PENDING") && (
+          {showCancel && (booking.status === "CONFIRMED" || booking.status === "PENDING" || booking.status === "BOOKED") && (
             <Button 
               variant="ghost" 
               size="sm"

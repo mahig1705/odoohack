@@ -335,6 +335,15 @@ export const resourceApi = {
       method: "POST",
     });
   },
+
+  assign: async (appointmentTypeId: string, resourceId: string) => {
+    return apiRequest<{ message: string }>(
+      `/resources/assign?appointment_type_id=${appointmentTypeId}&resource_id=${resourceId}`,
+      {
+        method: "POST",
+      }
+    );
+  },
 };
 
 // Appointment Questions API
@@ -347,6 +356,51 @@ export const appointmentQuestionApi = {
       input_type: string;
       is_required: boolean;
     }>>(`/appointment-questions/${appointmentTypeId}`);
+  },
+};
+
+// Payment API
+export const paymentApi = {
+  create: async (data: {
+    appointment_id: string;
+    amount: number;
+    payment_method: string;
+  }) => {
+    return apiRequest<{
+      payment_id: string;
+      status: string;
+    }>("/payments", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+};
+
+// Appointment Answers API
+export const appointmentAnswerApi = {
+  submit: async (data: {
+    appointment_id: string;
+    question_id: string;
+    answer: string;
+  }) => {
+    return apiRequest<{ message: string }>("/appointment-answers", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+};
+
+// Appointment Status History API
+export const appointmentStatusApi = {
+  getHistory: async (appointmentId: string) => {
+    return apiRequest<Array<{
+      id: string;
+      appointment_id: string;
+      old_status: string;
+      new_status: string;
+      changed_at: string;
+      changed_by: string;
+    }>>(`/appointment-status/${appointmentId}`);
   },
 };
 

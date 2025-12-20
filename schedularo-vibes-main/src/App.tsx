@@ -54,9 +54,9 @@ const App = () => (
             <Route path="/customer/dashboard" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerDashboard /></ProtectedRoute>} />
             <Route path="/customer/discover" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerDiscover /></ProtectedRoute>} />
             <Route
-  path="/customer/book/:appointmentTypeId"
-  element={<BookAppointment />}
-/>
+              path="/customer/book/:appointmentTypeId"
+              element={<ProtectedRoute allowedRoles={["customer"]}><BookAppointment /></ProtectedRoute>}
+            />
             <Route path="/customer/bookings" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerBookings /></ProtectedRoute>} />
             <Route path="/customer/profile" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerProfile /></ProtectedRoute>} />
 
