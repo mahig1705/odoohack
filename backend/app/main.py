@@ -15,10 +15,16 @@ from app.routers import (
     appointment_status,
     resource,
     user,
+    auto_booking,
 )
 from app.models.role import Role
 from app.models.user_role import UserRole
+<<<<<<< HEAD
 from app.routers import admin
+=======
+from app.schemas.user import UserUpdate
+
+>>>>>>> main
 # Create tables
 Base.metadata.create_all(bind=engine)
 
@@ -50,4 +56,8 @@ app.include_router(cancel.router)
 app.include_router(appointment_question.router)
 app.include_router(appointment_answer.router)
 app.include_router(appointment_status.router)
+<<<<<<< HEAD
 app.include_router(admin.router)
+=======
+app.include_router(auto_booking.router)
+>>>>>>> main

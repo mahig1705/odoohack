@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, Integer, ForeignKey
+from sqlalchemy import Column, String, Boolean, Integer, ForeignKey, Float
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 
@@ -11,6 +11,8 @@ class Resource(Base):
     name = Column(String(100), nullable=False)
     capacity = Column(Integer, default=1)
     is_active = Column(Boolean, default=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
 
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
 

@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DoodleArrow, FloatingDoodle } from "@/components/doodles";
+import { bookingApi } from "@/lib/api";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
@@ -9,14 +11,26 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December"
 ];
 
-interface HeroCalendarProps {
-  className?: string;
+interface Booking {
+  id: string;
+  slot_date: string;
+  start_time: string;
+  end_time: string;
+  appointment_type_name: string;
+  status: string;
 }
 
-export const HeroCalendar = ({ className = "" }: HeroCalendarProps) => {
+interface HeroCalendarProps {
+  className?: string;
+  isLoggedIn?: boolean;
+}
+
+export const HeroCalendar = ({ className = "", isLoggedIn = false }: HeroCalendarProps) => {
   const today = new Date();
   const [currentDate, setCurrentDate] = useState(today);
   const [selectedDate, setSelectedDate] = useState<number | null>(today.getDate());
+  const [appointments, setAppointments] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -24,6 +38,48 @@ export const HeroCalendar = ({ className = "" }: HeroCalendarProps) => {
 
   const getFirstDayOfMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  // Fetch appointments when logged in
+  useEffect(() => {
+    if (isLoggedIn) {
+      setIsLoading(true);
+      bookingApi.getMyBookings()
+        .then((data) => {
+          setAppointments(data);
+        })
+        .catch((error) => {
+          console.error("Error fetching appointments:", error);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+  }, [isLoggedIn]);
+
+  // Group appointments by date
+  const appointmentsByDate = useMemo(() => {
+    const grouped: Record<string, Booking[]> = {};
+    appointments.forEach((apt) => {
+      const date = apt.slot_date.split('T')[0]; // Get YYYY-MM-DD
+      if (!grouped[date]) {
+        grouped[date] = [];
+      }
+      grouped[date].push(apt);
+    });
+    return grouped;
+  }, [appointments]);
+
+  // Check if a day has appointments
+  const hasAppointments = (day: number): boolean => {
+    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return !!appointmentsByDate[dateStr]?.length;
+  };
+
+  // Get appointments for a specific day
+  const getAppointmentsForDay = (day: number): Booking[] => {
+    const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return appointmentsByDate[dateStr] || [];
   };
 
   const daysInMonth = getDaysInMonth(currentDate);
@@ -55,8 +111,22 @@ export const HeroCalendar = ({ className = "" }: HeroCalendarProps) => {
   for (let day = 1; day <= daysInMonth; day++) {
     const isSelected = selectedDate === day;
     const isTodayDate = isToday(day);
+    const hasApts = isLoggedIn && hasAppointments(day);
+    const dayAppointments = hasApts ? getAppointmentsForDay(day) : [];
+    
+    // Create tooltip content for days with appointments
+    const tooltipContent = hasApts ? (
+      <div className="text-xs">
+        <div className="font-semibold mb-1">Appointments:</div>
+        {dayAppointments.map((apt) => (
+          <div key={apt.id} className="text-xs">
+            {apt.start_time} - {apt.appointment_type_name}
+          </div>
+        ))}
+      </div>
+    ) : null;
 
-    days.push(
+    const dayButton = (
       <motion.button
         key={day}
         whileHover={{ scale: 1.1 }}
@@ -67,14 +137,22 @@ export const HeroCalendar = ({ className = "" }: HeroCalendarProps) => {
           transition-all duration-200 relative
           ${isSelected 
             ? "bg-primary text-primary-foreground shadow-glow" 
-            : isTodayDate
-              ? "bg-accent text-accent-foreground"
-              : "hover:bg-muted text-foreground"
+            : hasApts
+              ? "bg-secondary text-secondary-foreground"
+              : isTodayDate
+                ? "bg-muted text-foreground"
+                : "hover:bg-muted text-foreground"
           }
         `}
       >
         {day}
-        {isTodayDate && !isSelected && (
+        {hasApts && !isSelected && (
+          <motion.div
+            layoutId="appointment-indicator"
+            className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-primary rounded-full"
+          />
+        )}
+        {isTodayDate && !isSelected && !hasApts && (
           <motion.div
             layoutId="today-indicator"
             className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full"
@@ -82,6 +160,22 @@ export const HeroCalendar = ({ className = "" }: HeroCalendarProps) => {
         )}
       </motion.button>
     );
+
+    // Wrap with tooltip if has appointments
+    if (hasApts && tooltipContent) {
+      days.push(
+        <Tooltip key={day}>
+          <TooltipTrigger asChild>
+            {dayButton}
+          </TooltipTrigger>
+          <TooltipContent>
+            {tooltipContent}
+          </TooltipContent>
+        </Tooltip>
+      );
+    } else {
+      days.push(dayButton);
+    }
   }
 
   return (
@@ -158,12 +252,31 @@ export const HeroCalendar = ({ className = "" }: HeroCalendarProps) => {
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            className="px-6 py-4 bg-primary/10 border-t border-border"
+            className="px-6 py-4 bg-secondary border-t border-border"
           >
-            <p className="text-sm text-muted-foreground">Selected date:</p>
-            <p className="font-display font-bold text-lg">
+            <p className="text-sm text-muted-foreground mb-2">
               {MONTHS[currentDate.getMonth()]} {selectedDate}, {currentDate.getFullYear()}
             </p>
+            {isLoggedIn && getAppointmentsForDay(selectedDate).length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold">Your appointments:</p>
+                {getAppointmentsForDay(selectedDate).map((apt) => (
+                  <div key={apt.id} className="text-sm bg-background/50 rounded-lg p-2">
+                    <div className="font-semibold">{apt.appointment_type_name}</div>
+                    <div className="text-muted-foreground">
+                      {apt.start_time} - {apt.end_time}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Status: {apt.status}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {isLoggedIn ? "No appointments on this day" : "Select a date to view details"}
+              </p>
+            )}
           </motion.div>
         )}
       </div>

@@ -157,6 +157,13 @@ const AppointmentFormPage = () => {
         setCurrency("USD");
         setIsPaid(false);
         setCapacity(1);
+        // Set booking mode based on appointment_mode from backend
+        // Backend uses "user" or "resource", not "IN_PERSON"/"ONLINE"
+        if (appt.appointment_mode === "resource") {
+          setBookingMode("resource");
+        } else {
+          setBookingMode("user");
+        }
       }
 
       // Fetch resource assignments
@@ -205,19 +212,36 @@ const AppointmentFormPage = () => {
     setSaving(true);
     try {
       const durationTotal = durationHours * 60 + durationMinutes;
+      // Backend expects "user" or "resource" for appointment_mode
+      // "user" = book by user/person, "resource" = book by resource (room, equipment, etc.)
       const appointmentData = {
         name: title,
         description: description || undefined,
         duration_minutes: durationTotal,
-        appointment_mode: location ? "IN_PERSON" : "ONLINE",
+        appointment_mode: bookingMode, // "user" or "resource"
         location: location || undefined,
       };
 
       let appointmentId = id;
 
       if (isEditing && id) {
-        // Update not available in backend, create new one
-        const result = await appointmentTypeApi.create(appointmentData);
+        // Update existing appointment type
+        // Clean the payload: remove empty strings and only send changed fields
+        const updateData: {
+          name?: string;
+          description?: string;
+          duration_minutes?: number;
+          appointment_mode?: string;
+          location?: string;
+        } = {};
+        
+        if (title.trim()) updateData.name = title.trim();
+        if (description.trim()) updateData.description = description.trim();
+        updateData.duration_minutes = durationTotal;
+        updateData.appointment_mode = bookingMode;
+        if (location.trim()) updateData.location = location.trim();
+        
+        const result = await appointmentTypeApi.update(id, updateData);
         appointmentId = result.id;
       } else {
         const result = await appointmentTypeApi.create(appointmentData);
@@ -271,8 +295,23 @@ const AppointmentFormPage = () => {
         }
       }
 
-      // Assign resources (if backend supports it)
-      // Note: Resource assignment endpoint exists but requires POST with body params
+      // Assign resources
+      if (selectedResources.length > 0 && appointmentId) {
+        try {
+          await Promise.all(
+            selectedResources.map(resourceId =>
+              resourceApi.assign(appointmentId, resourceId)
+            )
+          );
+        } catch (error: any) {
+          console.error("Error assigning resources:", error);
+          toast({
+            title: "Warning",
+            description: `Appointment saved but resource assignment may have failed: ${error.message}`,
+            variant: "destructive"
+          });
+        }
+      }
 
       toast({ title: "Saved!", description: "Appointment saved successfully" });
       navigate("/organizer/appointments");
@@ -496,32 +535,48 @@ const AppointmentFormPage = () => {
                 </RadioGroup>
               </div>
 
-              {/* Resource/User Selection */}
-              <div>
-                <Label className="mb-3 block">
-                  {bookingMode === "user" ? "Select Users" : "Select Resources"}
-                </Label>
-                <div className="flex flex-wrap gap-2">
-                  {resources.map((resource) => (
-                    <Badge
-                      key={resource.id}
-                      variant={selectedResources.includes(resource.id) ? "default" : "outline"}
-                      className="cursor-pointer transition-all hover:scale-105"
-                      onClick={() => toggleResource(resource.id)}
+              {/* Resource Selection - Only show when booking mode is "resource" */}
+              {bookingMode === "resource" && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <Label>Select Resources</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate("/organizer/resources")}
                     >
-                      {resource.name}
-                    </Badge>
-                  ))}
-                  {resources.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      No resources found.{" "}
-                      <Button variant="link" className="p-0 h-auto" onClick={() => navigate("/organizer/resources")}>
-                        Add resources
-                      </Button>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Resource
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {resources.map((resource) => (
+                      <Badge
+                        key={resource.id}
+                        variant={selectedResources.includes(resource.id) ? "default" : "outline"}
+                        className="cursor-pointer transition-all hover:scale-105"
+                        onClick={() => toggleResource(resource.id)}
+                      >
+                        {resource.name}
+                      </Badge>
+                    ))}
+                    {resources.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        No resources found.{" "}
+                        <Button variant="link" className="p-0 h-auto" onClick={() => navigate("/organizer/resources")}>
+                          Add resources
+                        </Button>
+                      </p>
+                    )}
+                  </div>
+                  {selectedResources.length > 0 && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {selectedResources.length} resource{selectedResources.length !== 1 ? 's' : ''} selected
                     </p>
                   )}
                 </div>
-              </div>
+              )}
 
               <div>
                 <Label className="mb-3 block">Assignment Logic</Label>

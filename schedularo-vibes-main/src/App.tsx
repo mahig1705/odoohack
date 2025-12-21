@@ -9,6 +9,8 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
+import VerifyPasswordReset from "./pages/VerifyPasswordReset";
+import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import NotFound from "./pages/NotFound";
 import AdminUsers from "@/pages/admin/users";
@@ -51,15 +53,17 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/verify-password-reset" element={<VerifyPasswordReset />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
 
             {/* Customer routes */}
             <Route path="/customer/dashboard" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerDashboard /></ProtectedRoute>} />
             <Route path="/customer/discover" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerDiscover /></ProtectedRoute>} />
             <Route
-  path="/customer/book/:appointmentTypeId"
-  element={<BookAppointment />}
-/>
+              path="/customer/book/:appointmentTypeId"
+              element={<ProtectedRoute allowedRoles={["customer"]}><BookAppointment /></ProtectedRoute>}
+            />
             <Route path="/customer/bookings" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerBookings /></ProtectedRoute>} />
             <Route path="/customer/profile" element={<ProtectedRoute allowedRoles={["customer"]}><CustomerProfile /></ProtectedRoute>} />
 

@@ -75,9 +75,16 @@ export const authApi = {
   },
 
   verifyOtp: async (data: { email: string; otp: string }) => {
-    return apiRequest<{ message: string }>("/auth/verify-otp", {
+    return apiRequest<{ message: string }>("/auth/verify-email", {
       method: "POST",
       body: JSON.stringify(data),
+    });
+  },
+
+  resendVerificationOtp: async (email: string) => {
+    return apiRequest<{ message: string }>("/auth/resend-verification-otp", {
+      method: "POST",
+      body: JSON.stringify({ email }),
     });
   },
 
@@ -145,6 +152,33 @@ export const appointmentTypeApi = {
     }>("/appointment-types", {
       method: "POST",
       body: JSON.stringify(data),
+    });
+  },
+
+  update: async (appointmentId: string, data: {
+    name?: string;
+    description?: string;
+    duration_minutes?: number;
+    appointment_mode?: string;
+    location?: string;
+  }) => {
+    // Clean the payload: remove empty strings and undefined values
+    const cleanedData: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined && value !== "" && value !== null) {
+        cleanedData[key] = value;
+      }
+    }
+    
+    return apiRequest<{
+      id: string;
+      name: string;
+      duration_minutes: number;
+      appointment_mode: string;
+      is_published: boolean;
+    }>(`/appointment-types/${appointmentId}`, {
+      method: "PATCH",
+      body: JSON.stringify(cleanedData),
     });
   },
 
@@ -290,11 +324,27 @@ export const bookingApi = {
   },
 };
 
-// Auth API - Password Reset (placeholder - backend endpoint not implemented yet)
+// Password Reset API
 export const passwordApi = {
-  resetRequest: async (email: string) => {
-    // TODO: Implement password reset endpoint in backend
-    throw new Error("Password reset functionality not yet implemented in backend");
+  requestReset: async (email: string) => {
+    return apiRequest<{ message: string }>("/auth/request-password-reset", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  verifyOtp: async (email: string, otp: string) => {
+    return apiRequest<{ reset_token: string }>("/auth/verify-password-reset-otp", {
+      method: "POST",
+      body: JSON.stringify({ email, otp }),
+    });
+  },
+
+  resetPassword: async (resetToken: string, newPassword: string) => {
+    return apiRequest<{ message: string }>("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ reset_token: resetToken, new_password: newPassword }),
+    });
   },
 };
 
@@ -335,6 +385,15 @@ export const resourceApi = {
       method: "POST",
     });
   },
+
+  assign: async (appointmentTypeId: string, resourceId: string) => {
+    return apiRequest<{ message: string }>(
+      `/resources/assign?appointment_type_id=${appointmentTypeId}&resource_id=${resourceId}`,
+      {
+        method: "POST",
+      }
+    );
+  },
 };
 
 // Appointment Questions API
@@ -350,6 +409,7 @@ export const appointmentQuestionApi = {
   },
 };
 
+<<<<<<< HEAD
 // ===========s====== ADMIN API =================
 export const adminApi = {
   getStats: async () => {
@@ -506,5 +566,92 @@ getRecentProviders: async () => {
 
   recentTransactions: () =>
     apiRequest("/admin/reports/recent-transactions"),
+=======
+// Payment API
+export const paymentApi = {
+  // Legacy create (keeps existing behavior for offline/manual payments)
+  create: async (data: {
+    appointment_id: string;
+    amount: number;
+    payment_method: string;
+  }) => {
+    return apiRequest<{
+      payment_id: string;
+      status: string;
+    }>("/payments", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+  createOrder: async (data: { appointment_id: string; amount: number; currency?: string }) => {
+    return apiRequest<{
+      payment_id: string;
+      order_id: string;
+      amount: number;
+      currency: string;
+      key_id: string;
+    }>("/payments/create-order", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  verify: async (data: { payment_id: string; razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
+    return apiRequest<{ success: boolean }>("/payments/verify", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Create an online order (Razorpay). Returns our payment record id and razorpay order id + key id.
+  createOrder: async (data: { appointment_id: string; amount: number; currency?: string }) => {
+    return apiRequest<{
+      payment_id: string;
+      order_id: string;
+      amount: number;
+      currency: string;
+      key_id: string;
+    }>("/payments/create-order", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Verify payment after Razorpay checkout
+  verify: async (data: { payment_id: string; razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
+    return apiRequest<{ success: boolean; payment_id: string }>("/payments/verify", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+};
+
+// Appointment Answers API
+export const appointmentAnswerApi = {
+  submit: async (data: {
+    appointment_id: string;
+    question_id: string;
+    answer: string;
+  }) => {
+    return apiRequest<{ message: string }>("/appointment-answers", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+};
+
+// Appointment Status History API
+export const appointmentStatusApi = {
+  getHistory: async (appointmentId: string) => {
+    return apiRequest<Array<{
+      id: string;
+      appointment_id: string;
+      old_status: string;
+      new_status: string;
+      changed_at: string;
+      changed_by: string;
+    }>>(`/appointment-status/${appointmentId}`);
+  },
+>>>>>>> main
 };
 

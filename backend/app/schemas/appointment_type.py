@@ -4,10 +4,17 @@ from uuid import UUID
 
 class AppointmentTypeCreate(BaseModel):
     name: str
-    description: Optional[str]
+    description: Optional[str] = None
     duration_minutes: int
     appointment_mode: str
-    location: Optional[str]
+    location: Optional[str] = None
+
+class AppointmentTypeUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    appointment_mode: Optional[str] = None
+    location: Optional[str] = None
 
 class AppointmentTypeResponse(BaseModel):
     id: UUID
