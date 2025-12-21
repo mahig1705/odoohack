@@ -224,22 +224,58 @@ export default function BookAppointment() {
 
     setProcessingPayment(true);
     try {
-      await paymentApi.create({
+      // Create order on backend
+      const orderResp = await paymentApi.createOrder({
         appointment_id: appointmentId,
         amount: parseFloat(paymentAmount),
-        payment_method: paymentMethod,
+        currency: "INR",
       });
 
-      toast({
-        title: "Payment successful",
-        description: "Your appointment has been confirmed",
-      });
+      // Load Razorpay script
+      await loadRazorpayScript();
 
-      // Redirect to bookings page after a short delay
-      setTimeout(() => {
-        navigate("/customer/bookings");
-      }, 2000);
+      const options: any = {
+        key: orderResp.key_id,
+        amount: orderResp.amount, // in paise
+        currency: orderResp.currency,
+        name: "Schedularo",
+        description: "Appointment Payment",
+        order_id: orderResp.order_id,
+        handler: async function (response: any) {
+          try {
+            // Verify payment on backend
+            await paymentApi.verify({
+              payment_id: orderResp.payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            toast({
+              title: "Payment successful",
+              description: "Your appointment has been confirmed",
+            });
+
+            setTimeout(() => {
+              navigate("/customer/bookings");
+            }, 1200);
+          } catch (verifyErr: any) {
+            console.error("Payment verification failed", verifyErr);
+            toast({
+              title: "Payment verification failed",
+              description: verifyErr?.message || "Verification failed",
+              variant: "destructive",
+            });
+          }
+        },
+        prefill: {},
+        theme: { color: "#3b82f6" },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
     } catch (err: any) {
+      console.error("Payment error", err);
       toast({
         title: "Payment failed",
         description: err.message || "Something went wrong",
@@ -248,6 +284,19 @@ export default function BookAppointment() {
     } finally {
       setProcessingPayment(false);
     }
+  };
+
+
+  // Helper to load Razorpay checkout script
+  const loadRazorpayScript = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if ((window as any).Razorpay) return resolve();
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("Failed to load Razorpay script"));
+      document.body.appendChild(script);
+    });
   };
 
   const handleSkipPayment = () => {
@@ -393,11 +442,7 @@ export default function BookAppointment() {
                     "Pay Now"
                   )}
                 </Button>
-                {!paymentRequired && (
-                  <Button variant="outline" onClick={handleSkipPayment}>
-                    Skip Payment
-                  </Button>
-                )}
+                
               </div>
             </CardContent>
           </Card>

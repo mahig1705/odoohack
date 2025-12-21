@@ -19,6 +19,7 @@ from app.routers import (
 )
 from app.models.role import Role
 from app.models.user_role import UserRole
+from app.schemas.user import UserUpdate
 
 # Create tables
 Base.metadata.create_all(bind=engine)

@@ -411,6 +411,7 @@ export const appointmentQuestionApi = {
 
 // Payment API
 export const paymentApi = {
+  // Legacy create (keeps existing behavior for offline/manual payments)
   create: async (data: {
     appointment_id: string;
     amount: number;
@@ -420,6 +421,47 @@ export const paymentApi = {
       payment_id: string;
       status: string;
     }>("/payments", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+  createOrder: async (data: { appointment_id: string; amount: number; currency?: string }) => {
+    return apiRequest<{
+      payment_id: string;
+      order_id: string;
+      amount: number;
+      currency: string;
+      key_id: string;
+    }>("/payments/create-order", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  verify: async (data: { payment_id: string; razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
+    return apiRequest<{ success: boolean }>("/payments/verify", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Create an online order (Razorpay). Returns our payment record id and razorpay order id + key id.
+  createOrder: async (data: { appointment_id: string; amount: number; currency?: string }) => {
+    return apiRequest<{
+      payment_id: string;
+      order_id: string;
+      amount: number;
+      currency: string;
+      key_id: string;
+    }>("/payments/create-order", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Verify payment after Razorpay checkout
+  verify: async (data: { payment_id: string; razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
+    return apiRequest<{ success: boolean; payment_id: string }>("/payments/verify", {
       method: "POST",
       body: JSON.stringify(data),
     });
