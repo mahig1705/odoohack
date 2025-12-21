@@ -37,7 +37,9 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: <LayoutDashboard className="w-4 h-4" /> },
   { label: "Users", href: "/admin/users", icon: <Users className="w-4 h-4" /> },
-  { label: "Roles", href: "/admin/roles", icon: <Shield className="w-4 h-4" /> },
+  { label: "Resources", href: "/admin/resources", icon: <Shield className="w-4 h-4" /> },
+  { label: "Appointments", href: "/admin/appointment", icon: <BarChart3 className="w-4 h-4" /> },
+  { label: "Service Providers", href: "/admin/serviceprovider", icon: <Shield className="w-4 h-4" /> },
   { label: "Reports", href: "/admin/reports", icon: <BarChart3 className="w-4 h-4" /> },
 ];
 
