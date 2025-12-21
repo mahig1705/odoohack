@@ -25,7 +25,9 @@ def auto_book(
             user_id=current_user.id,
             appointment_type_id=data.appointment_type_id,
             latitude=data.latitude,
-            longitude=data.longitude
+            longitude=data.longitude,
+            preferred_date=data.preferred_date,
+            preferred_time=data.preferred_time,
         )
         
         appointment = result["appointment"]
@@ -34,12 +36,27 @@ def auto_book(
         
         print(f"DEBUG auto-book API: Booking successful - appointment_id={appointment.id}")
         
+        # Determine whether the booking matched preferred date/time or was a fallback
+        pref_date = data.preferred_date
+        pref_time = data.preferred_time
+
+        matched_date = (pref_date is None) or (slot.slot_date == pref_date)
+        matched_time = (pref_time is None) or (slot.start_time == pref_time)
+
+        if pref_date or pref_time:
+            if matched_date and matched_time:
+                msg = f"Appointment booked successfully at {resource.name} on {slot.slot_date.strftime('%Y-%m-%d')} from {slot.start_time.strftime('%H:%M')} to {slot.end_time.strftime('%H:%M')}"
+            else:
+                msg = f"Exact time not available. Booked nearest available slot at {resource.name} on {slot.slot_date.strftime('%Y-%m-%d')} from {slot.start_time.strftime('%H:%M')} to {slot.end_time.strftime('%H:%M')}"
+        else:
+            msg = f"Appointment booked successfully at {resource.name} on {slot.slot_date.strftime('%Y-%m-%d')} from {slot.start_time.strftime('%H:%M')} to {slot.end_time.strftime('%H:%M')}"
+
         return AutoBookingResponse(
             appointment_id=appointment.id,
             resource_name=resource.name,
             start_time=slot.start_time.strftime("%H:%M"),
             end_time=slot.end_time.strftime("%H:%M"),
-            message=f"Appointment booked successfully at {resource.name} on {slot.slot_date.strftime('%Y-%m-%d')} from {slot.start_time.strftime('%H:%M')} to {slot.end_time.strftime('%H:%M')}"
+            message=msg
         )
     except Exception as e:
         error_msg = str(e)

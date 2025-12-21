@@ -73,6 +73,128 @@ const speak = (text: string) => {
   }
 };
 
+function formatTimeForSpeak(hhmm: string) {
+  if (!hhmm) return "";
+  const [h, m] = hhmm.split(":").map((s) => parseInt(s, 10));
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  if (m && m > 0) return `${hour12}:${m < 10 ? '0'+m : m} ${ampm}`;
+  return `${hour12} ${ampm}`;
+}
+
+/* ============================
+   Transcript parser (rule-based)
+   - Returns preferred_date in YYYY-MM-DD
+   - Returns preferred_time in HH:MM (24h)
+   - No NLP, pure regex + mapping
+============================ */
+const monthMap: Record<string, number> = {
+  january: 1,
+  jan: 1,
+  february: 2,
+  feb: 2,
+  march: 3,
+  mar: 3,
+  april: 4,
+  apr: 4,
+  may: 5,
+  june: 6,
+  jun: 6,
+  july: 7,
+  jul: 7,
+  august: 8,
+  aug: 8,
+  september: 9,
+  sep: 9,
+  sept: 9,
+  october: 10,
+  oct: 10,
+  november: 11,
+  nov: 11,
+  december: 12,
+  dec: 12,
+};
+
+function pad(n: number) {
+  return n < 10 ? `0${n}` : `${n}`;
+}
+
+export function parseDateTimeFromTranscript(transcript: string): {
+  preferred_date?: string;
+  preferred_time?: string;
+} {
+  if (!transcript || !transcript.trim()) return {};
+
+  const text = transcript.toLowerCase();
+  const now = new Date();
+
+  let preferred_date: string | undefined;
+  let preferred_time: string | undefined;
+
+  // Keywords: today / tomorrow
+  if (text.includes("today")) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    preferred_date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  } else if (text.includes("tomorrow")) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    preferred_date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
+  // Date like "20th december" or "20 december" or "december 20"
+  const dateRegex = /\b(\d{1,2})(?:st|nd|rd|th)?\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\b/i;
+  const dateRegex2 = /\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\s+(\d{1,2})(?:st|nd|rd|th)?\b/i;
+
+  const m1 = text.match(dateRegex);
+  const m2 = text.match(dateRegex2);
+  let dayNum: number | null = null;
+  let monthNum: number | null = null;
+
+  if (m1) {
+    dayNum = parseInt(m1[1], 10);
+    monthNum = monthMap[m1[2].toLowerCase()];
+  } else if (m2) {
+    dayNum = parseInt(m2[2], 10);
+    monthNum = monthMap[m2[1].toLowerCase()];
+  }
+
+  if (dayNum && monthNum) {
+    // construct date with current year, roll over to next year if in the past
+    let year = now.getFullYear();
+    const candidate = new Date(year, monthNum - 1, dayNum);
+    const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (candidate < todayMid) {
+      candidate.setFullYear(year + 1);
+    }
+    preferred_date = `${candidate.getFullYear()}-${pad(candidate.getMonth() + 1)}-${pad(candidate.getDate())}`;
+  }
+
+  // Time parsing: 3 pm, 3pm, 11 am, 5 -> assume hour
+  // Match hour[:mm] optional am/pm
+  const timeRegex = /\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/i;
+  const tm = text.match(timeRegex);
+  if (tm) {
+    let hour = parseInt(tm[1], 10);
+    const minute = tm[2] ? parseInt(tm[2], 10) : 0;
+    const ampm = tm[3] ? tm[3].toLowerCase() : null;
+
+    if (ampm) {
+      if (ampm === "pm" && hour < 12) hour += 12;
+      if (ampm === "am" && hour === 12) hour = 0;
+    }
+
+    // If no am/pm and hour between 1-6, reasonable to assume PM? To be deterministic, assume user's hour as-is (24h not specified)
+    // We'll keep the numeric hour and interpret as 24h when sending (e.g., "5" -> 05:00). This is deterministic.
+
+    hour = Math.max(0, Math.min(23, hour));
+    preferred_time = `${pad(hour)}:${pad(minute)}`;
+  }
+
+  const result: { preferred_date?: string; preferred_time?: string } = {};
+  if (preferred_date) result.preferred_date = preferred_date;
+  if (preferred_time) result.preferred_time = preferred_time;
+  return result;
+}
+
 /* ============================
    Component
 ============================ */
@@ -123,7 +245,7 @@ const VoiceAutoBookButton = ({ className, appointmentTypeId }: VoiceAutoBookButt
   /* ============================
      Auto Booking
   ============================ */
-  const handleAutoBook = useCallback(async () => {
+  const handleAutoBook = useCallback(async (prefs?: { preferred_date?: string; preferred_time?: string }) => {
     setIsProcessing(true);
     setIsListening(false);
 
@@ -139,11 +261,15 @@ const VoiceAutoBookButton = ({ className, appointmentTypeId }: VoiceAutoBookButt
 
       const { latitude, longitude } = await getCurrentLocation();
 
-      console.log("🚀 Auto-booking request:", {
-        appointment_type_id: appointmentTypeId,
+      const payload: any = {
         latitude,
         longitude,
-      });
+        appointment_type_id: appointmentTypeId,
+      };
+      if (prefs?.preferred_date) payload.preferred_date = prefs.preferred_date;
+      if (prefs?.preferred_time) payload.preferred_time = prefs.preferred_time;
+
+      console.log("🚀 Auto-booking request:", payload);
 
       const response = await fetch(`${API_BASE_URL}/auto-book/`, {
         method: "POST",
@@ -151,11 +277,7 @@ const VoiceAutoBookButton = ({ className, appointmentTypeId }: VoiceAutoBookButt
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ 
-          latitude, 
-          longitude,
-          appointment_type_id: appointmentTypeId
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -167,7 +289,29 @@ const VoiceAutoBookButton = ({ className, appointmentTypeId }: VoiceAutoBookButt
 
       const data: AutoBookingResponse = await response.json();
 
-      speak(`Appointment booked successfully at ${data.resource_name}`);
+      // Determine whether server booked exact preference or used fallback
+      let verbal: string;
+      const prefDate = prefs?.preferred_date;
+      const prefTime = prefs?.preferred_time;
+
+      const messageText = data.message || "";
+
+      const matchedDate = prefDate ? messageText.includes(prefDate) : true;
+      const matchedTime = prefTime ? data.start_time === prefTime : true;
+
+      if (prefDate || prefTime) {
+        if (matchedDate && matchedTime) {
+          // Exact match
+          verbal = `Your appointment has been booked on ${prefDate ? prefDate : ''}${prefDate && prefTime ? ' at ' : ''}${prefTime ? formatTimeForSpeak(prefTime) : ''}`.trim();
+        } else {
+          // Fallback
+          verbal = `Exact time not available. Booked nearest available slot.`;
+        }
+      } else {
+        verbal = `Appointment booked successfully at ${data.resource_name}`;
+      }
+
+      speak(verbal);
 
       toast({
         title: "Appointment booked",
@@ -222,8 +366,10 @@ const VoiceAutoBookButton = ({ className, appointmentTypeId }: VoiceAutoBookButt
         transcript.includes(k)
       );
 
+      const prefs = parseDateTimeFromTranscript(transcript);
+
       if (isBookingIntent) {
-        handleAutoBook();
+        handleAutoBook(prefs);
       } else {
         speak("Please say book appointment");
         toast({

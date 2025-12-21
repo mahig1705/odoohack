@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select, and_, func
 from datetime import datetime, date, time
+from typing import Optional
 import math
 from uuid import UUID
 from fastapi import HTTPException
@@ -171,7 +172,7 @@ def find_earliest_available_slot_for_appointment_type(
     return slot
 
 
-def create_auto_booking(db: Session, user_id, appointment_type_id: UUID, latitude: float, longitude: float):
+def create_auto_booking(db: Session, user_id, appointment_type_id: UUID, latitude: float, longitude: float, preferred_date: Optional[date] = None, preferred_time: Optional[time] = None):
     """Create an automatic booking based on location and appointment type"""
     print(f"DEBUG auto-book: Starting auto booking for user={user_id}, appointment_type={appointment_type_id}, location=({latitude}, {longitude})")
     
@@ -197,8 +198,68 @@ def create_auto_booking(db: Session, user_id, appointment_type_id: UUID, latitud
     
     # Find earliest available slot for this appointment type
     try:
-        slot = find_earliest_available_slot_for_appointment_type(db, appointment_type_id)
-        print(f"DEBUG auto-book: Earliest slot found: {slot.id} on {slot.slot_date}")
+        # Collect candidate slots (future, open, capacity available)
+        today = date.today()
+        candidates = db.query(Slot).filter(
+            Slot.appointment_type_id == appointment_type_id,
+            Slot.status == "OPEN",
+            Slot.booked_capacity < Slot.max_capacity,
+            Slot.slot_date >= today
+        ).all()
+
+        print(f"DEBUG auto-book: Found {len(candidates)} candidate future slots")
+
+        if not candidates:
+            print("DEBUG auto-book: No future candidate slots found")
+            raise HTTPException(status_code=404, detail="No slots available")
+
+        chosen_slot = None
+        used_fallback = False
+
+        # If preferred_date provided, try to find slots on that date
+        if preferred_date:
+            date_slots = [s for s in candidates if s.slot_date == preferred_date]
+            if date_slots:
+                # If preferred_time also provided, pick by nearest time difference
+                if preferred_time:
+                    def time_diff_minutes(s):
+                        dt_slot = datetime.combine(s.slot_date, s.start_time)
+                        dt_pref = datetime.combine(preferred_date, preferred_time)
+                        return abs((dt_slot - dt_pref).total_seconds() / 60.0)
+
+                    date_slots.sort(key=lambda s: (time_diff_minutes(s), s.slot_date, s.start_time))
+                    chosen_slot = date_slots[0]
+                else:
+                    # pick earliest on that date
+                    date_slots.sort(key=lambda s: (s.start_time, s.slot_date))
+                    chosen_slot = date_slots[0]
+            else:
+                # No slots on requested date -> fallback to nearest available
+                print("DEBUG auto-book: No slots available on selected date; falling back to nearest available slot")
+                used_fallback = True
+
+        # If not chosen yet, and preferred_time provided (but no date or no date match), select nearest by time across candidates
+        if not chosen_slot and preferred_time:
+            def time_diff_minutes_global(s):
+                # prefer same-day closeness but compute absolute diff to preferred_time on slot's date
+                dt_slot = datetime.combine(s.slot_date, s.start_time)
+                # For comparison, anchor preferred time to slot date
+                dt_pref = datetime.combine(s.slot_date, preferred_time)
+                return abs((dt_slot - dt_pref).total_seconds() / 60.0)
+
+            candidates.sort(key=lambda s: (time_diff_minutes_global(s), s.slot_date, s.start_time))
+            chosen_slot = candidates[0]
+
+        # If still not chosen, pick earliest available
+        if not chosen_slot:
+            candidates.sort(key=lambda s: (s.slot_date, s.start_time))
+            chosen_slot = candidates[0]
+
+        slot = chosen_slot
+        print(f"DEBUG auto-book: Chosen slot: {slot.id} on {slot.slot_date} at {slot.start_time}")
+        # include used_fallback in debug; we'll construct message later
+    except HTTPException:
+        raise
     except Exception as e:
         print(f"DEBUG auto-book: Slot finding failed: {str(e)}")
         raise
