@@ -6,10 +6,12 @@ from app.dependencies.roles import require_roles
 from app.database import get_db
 from app.schemas.appointment_type import (
     AppointmentTypeCreate,
+    AppointmentTypeUpdate,
     AppointmentTypeResponse
 )
 from app.services.appointment_type_service import (
     create_appointment_type,
+    update_appointment_type,
     publish_appointment_type
 )
 from app.dependencies.auth import get_current_user
@@ -27,6 +29,29 @@ def create(
 
 ):
     return create_appointment_type(db, data, current_user.id)
+
+
+@router.patch("/{appointment_id}", response_model=AppointmentTypeResponse)
+def update(
+    appointment_id: UUID,
+    data: AppointmentTypeUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("ORGANISER", "ADMIN"))
+):
+    """Update an appointment type. Only the organizer who created it can update it."""
+    appointment = db.query(AppointmentType).filter(
+        AppointmentType.id == appointment_id,
+        AppointmentType.created_by == current_user.id
+    ).first()
+
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Appointment type not found")
+
+    updated = update_appointment_type(db, appointment_id, data, current_user.id)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Appointment type not found")
+
+    return updated
 
 
 @router.post("/{appointment_id}/publish", response_model=AppointmentTypeResponse)

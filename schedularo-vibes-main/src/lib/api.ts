@@ -75,9 +75,16 @@ export const authApi = {
   },
 
   verifyOtp: async (data: { email: string; otp: string }) => {
-    return apiRequest<{ message: string }>("/auth/verify-otp", {
+    return apiRequest<{ message: string }>("/auth/verify-email", {
       method: "POST",
       body: JSON.stringify(data),
+    });
+  },
+
+  resendVerificationOtp: async (email: string) => {
+    return apiRequest<{ message: string }>("/auth/resend-verification-otp", {
+      method: "POST",
+      body: JSON.stringify({ email }),
     });
   },
 
@@ -145,6 +152,33 @@ export const appointmentTypeApi = {
     }>("/appointment-types", {
       method: "POST",
       body: JSON.stringify(data),
+    });
+  },
+
+  update: async (appointmentId: string, data: {
+    name?: string;
+    description?: string;
+    duration_minutes?: number;
+    appointment_mode?: string;
+    location?: string;
+  }) => {
+    // Clean the payload: remove empty strings and undefined values
+    const cleanedData: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined && value !== "" && value !== null) {
+        cleanedData[key] = value;
+      }
+    }
+    
+    return apiRequest<{
+      id: string;
+      name: string;
+      duration_minutes: number;
+      appointment_mode: string;
+      is_published: boolean;
+    }>(`/appointment-types/${appointmentId}`, {
+      method: "PATCH",
+      body: JSON.stringify(cleanedData),
     });
   },
 
@@ -290,11 +324,27 @@ export const bookingApi = {
   },
 };
 
-// Auth API - Password Reset (placeholder - backend endpoint not implemented yet)
+// Password Reset API
 export const passwordApi = {
-  resetRequest: async (email: string) => {
-    // TODO: Implement password reset endpoint in backend
-    throw new Error("Password reset functionality not yet implemented in backend");
+  requestReset: async (email: string) => {
+    return apiRequest<{ message: string }>("/auth/request-password-reset", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  verifyOtp: async (email: string, otp: string) => {
+    return apiRequest<{ reset_token: string }>("/auth/verify-password-reset-otp", {
+      method: "POST",
+      body: JSON.stringify({ email, otp }),
+    });
+  },
+
+  resetPassword: async (resetToken: string, newPassword: string) => {
+    return apiRequest<{ message: string }>("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ reset_token: resetToken, new_password: newPassword }),
+    });
   },
 };
 

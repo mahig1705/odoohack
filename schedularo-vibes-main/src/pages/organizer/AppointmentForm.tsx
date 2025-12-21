@@ -225,8 +225,23 @@ const AppointmentFormPage = () => {
       let appointmentId = id;
 
       if (isEditing && id) {
-        // Update not available in backend, create new one
-        const result = await appointmentTypeApi.create(appointmentData);
+        // Update existing appointment type
+        // Clean the payload: remove empty strings and only send changed fields
+        const updateData: {
+          name?: string;
+          description?: string;
+          duration_minutes?: number;
+          appointment_mode?: string;
+          location?: string;
+        } = {};
+        
+        if (title.trim()) updateData.name = title.trim();
+        if (description.trim()) updateData.description = description.trim();
+        updateData.duration_minutes = durationTotal;
+        updateData.appointment_mode = bookingMode;
+        if (location.trim()) updateData.location = location.trim();
+        
+        const result = await appointmentTypeApi.update(id, updateData);
         appointmentId = result.id;
       } else {
         const result = await appointmentTypeApi.create(appointmentData);

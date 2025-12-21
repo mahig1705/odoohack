@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthLayout } from "@/components/auth/AuthLayout";
-import { Mail, Loader2, ArrowLeft } from "lucide-react";
+import { Mail, Loader2, ArrowLeft, Key } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { passwordApi } from "@/lib/api";
 import { z } from "zod";
@@ -17,6 +17,7 @@ const ForgotPassword = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,12 +32,13 @@ const ForgotPassword = () => {
     setIsLoading(true);
     
     try {
-      await passwordApi.resetRequest(email);
+      await passwordApi.requestReset(email);
       toast({
         title: "Email sent!",
-        description: "Check your inbox for password reset instructions.",
+        description: "Check your inbox for the OTP code.",
       });
-      setIsSubmitted(true);
+      // Navigate to OTP verification page with email
+      navigate("/verify-password-reset", { state: { email } });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -59,7 +61,7 @@ const ForgotPassword = () => {
             <Mail className="w-8 h-8 text-primary" />
           </div>
           <p className="text-muted-foreground mb-6">
-            We've sent a password reset link to <strong>{email}</strong>
+            We've sent a password reset code to <strong>{email}</strong>
           </p>
           <Link to="/login">
             <Button variant="outline" className="w-full h-12 border-2 border-foreground rounded-xl">

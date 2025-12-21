@@ -10,8 +10,15 @@ import {
   FloatingDoodle 
 } from "@/components/doodles";
 import { ChevronDown, Sparkles, Zap, Calendar } from "lucide-react";
+import { Link } from "react-router-dom";
 
-export const HeroSection = () => {
+interface HeroSectionProps {
+  isLoggedIn?: boolean;
+  userName?: string;
+  userRole?: string;
+}
+
+export const HeroSection = ({ isLoggedIn = false, userName, userRole }: HeroSectionProps) => {
   return (
     <section className="relative min-h-screen overflow-hidden bg-background">
       {/* Background decorations */}
@@ -60,8 +67,22 @@ export const HeroSection = () => {
           </h2>
         </motion.div>
 
+        {/* Personalized greeting for logged-in customers */}
+        {isLoggedIn && userRole === "customer" && userName && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-center mb-6"
+          >
+            <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground">
+              Welcome back, {userName}
+            </h2>
+          </motion.div>
+        )}
+
         {/* Calendar component */}
-        <HeroCalendar className="mb-12" />
+        <HeroCalendar className="mb-12" isLoggedIn={isLoggedIn && userRole === "customer"} />
 
         {/* Main hero headline */}
         <motion.div
@@ -96,15 +117,27 @@ export const HeroSection = () => {
             <span className="text-primary">.</span>
           </h1>
           
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto"
-          >
-            Appointments made simple, for every business. 
-            From fitness studios to medical clinics — we've got you covered.
-          </motion.p>
+          {!isLoggedIn && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+              className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto"
+            >
+              Appointments made simple, for every business. 
+              From fitness studios to medical clinics — we've got you covered.
+            </motion.p>
+          )}
+          {isLoggedIn && userRole === "customer" && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+              className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto"
+            >
+              Manage your appointments, discover new services, and book your next session.
+            </motion.p>
+          )}
         </motion.div>
 
         {/* CTA Buttons */}
@@ -114,26 +147,54 @@ export const HeroSection = () => {
           transition={{ delay: 1 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 relative"
         >
-          <div className="relative">
-            <Button variant="hero" size="xl" className="group">
-              <Calendar className="w-5 h-5 mr-2" />
-              Get Started Free
-              <motion.span
-                className="ml-2"
-                animate={{ x: [0, 4, 0] }}
-                transition={{ repeat: Infinity, duration: 1.5 }}
-              >
-                →
-              </motion.span>
-            </Button>
-            <FloatingDoodle className="absolute -top-8 -right-12 w-16 h-12 hidden md:block" delay={1.5}>
-              <DoodleArrow direction="curved-down" className="w-full h-full" />
-            </FloatingDoodle>
-          </div>
-          
-          <Button variant="hero-outline" size="xl">
-            See Demo
-          </Button>
+          {isLoggedIn && userRole === "customer" ? (
+            <>
+              <Link to="/customer/discover">
+                <Button variant="hero" size="xl" className="group">
+                  <Calendar className="w-5 h-5 mr-2" />
+                  Discover Services
+                  <motion.span
+                    className="ml-2"
+                    animate={{ x: [0, 4, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                  >
+                    →
+                  </motion.span>
+                </Button>
+              </Link>
+              <Link to="/customer/bookings">
+                <Button variant="hero-outline" size="xl">
+                  My Bookings
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <div className="relative">
+                <Link to="/signup">
+                  <Button variant="hero" size="xl" className="group">
+                    <Calendar className="w-5 h-5 mr-2" />
+                    Get Started Free
+                    <motion.span
+                      className="ml-2"
+                      animate={{ x: [0, 4, 0] }}
+                      transition={{ repeat: Infinity, duration: 1.5 }}
+                    >
+                      →
+                    </motion.span>
+                  </Button>
+                </Link>
+                <FloatingDoodle className="absolute -top-8 -right-12 w-16 h-12 hidden md:block" delay={1.5}>
+                  <DoodleArrow direction="curved-down" className="w-full h-full" />
+                </FloatingDoodle>
+              </div>
+              <Link to="/login">
+                <Button variant="hero-outline" size="xl">
+                  Login
+                </Button>
+              </Link>
+            </>
+          )}
         </motion.div>
 
         {/* Scroll indicator */}
