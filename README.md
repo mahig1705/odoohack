@@ -4,7 +4,7 @@ This repository contains a scheduling platform with voice-enabled auto-booking a
 
 ## Demo
 
-Demo: (add demo link here)
+Demo: https://drive.google.com/drive/folders/1YuaxCvof7MF1KQ18o6g7YEi2xQUQZbWR
 
 ## Project Overview
 
