@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [shouldRedirect, setShouldRedirect] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -34,10 +35,21 @@ const Login = () => {
         return "/admin/dashboard";
       case "organizer":
         return "/organizer/dashboard";
+      case "customer":
+        return "/"; // Redirect customers to landing page
       default:
-        return "/customer/dashboard";
+        return "/"; // Default to landing page
     }
   };
+
+  // Handle redirect after role is updated
+  useEffect(() => {
+    if (shouldRedirect && role) {
+      navigate(getRedirectPath(role));
+      setShouldRedirect(false);
+      setIsLoading(false);
+    }
+  }, [shouldRedirect, role, navigate, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,11 +87,9 @@ const Login = () => {
       description: "You have successfully logged in.",
     });
     
-    // Small delay to let auth state update
-    setTimeout(() => {
-      navigate(getRedirectPath(role));
-      setIsLoading(false);
-    }, 500);
+    // Trigger redirect via useEffect that watches for role changes
+    // signIn already calls fetchProfile which updates the role
+    setShouldRedirect(true);
   };
 
   return (
