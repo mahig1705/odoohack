@@ -350,3 +350,161 @@ export const appointmentQuestionApi = {
   },
 };
 
+// ===========s====== ADMIN API =================
+export const adminApi = {
+  getStats: async () => {
+    return apiRequest<{
+      total_users: number;
+      total_organizers: number;
+      total_bookings: number;
+      total_appointment_types: number;
+    }>("/admin/stats");
+  },
+  // ================= ADMIN APPOINTMENTS =================
+getAppointmentTypes: async () => {
+  return apiRequest<Array<{
+    id: string;
+    name: string;
+    duration_minutes: number;
+    appointment_mode: string;
+    is_published: boolean;
+    created_by_name: string;
+  }>>("/admin/appointment-types");
+},
+getRecentUsers: async () => {
+  return apiRequest<Array<{
+    id: string;
+    full_name: string;
+    email: string;
+    status: string;
+    created_at: string;
+  }>>("/admin/recent-users");
+},
+getRecentProviders: async () => {
+  return apiRequest<Array<{
+    id: string;
+    name: string;
+    category: string;
+    status: string;
+    created_at: string;
+  }>>("/admin/recent-providers");
+},
+
+  getBookings: async () => {
+    return apiRequest<Array<{
+      id: string;
+      appointment_type_id: string;
+      slot_id: string;
+      user_id: string;
+      people_count: number;
+      status: string;
+      created_at: string;
+      appointment_type_name: string;
+      slot_date: string;
+      start_time: string;
+      end_time: string;
+      booked_by: string;
+    }>>("/admin/bookings");
+  },
+
+  getUsers: async () => {
+    return apiRequest<Array<{
+      id: string;
+      full_name: string;
+      email: string;
+      is_active: boolean;
+      roles: string[];
+    }>>("/admin/users");
+  },
+
+  updateUserStatus: async (userId: string, isActive: boolean) => {
+    return apiRequest<{ message: string }>(`/admin/users/${userId}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ is_active: isActive }),
+    });
+  },
+
+  updateUserRole: async (userId: string, role: string) => {
+    return apiRequest<{ message: string }>(`/admin/users/${userId}/role`, {
+      method: "PATCH",
+      body: JSON.stringify({ role }),
+    });
+  },
+  getProviders: async () => {
+    return apiRequest<Array<{
+      id: string;
+      name: string;
+      email: string;
+      status: "Active" | "Inactive";
+      bookings: number;
+      type: string;
+      rating: number | null;
+      location: string;
+      created_at: string;
+    }>>("/admin/providers");
+  },
+
+  /**
+   * Provider statistics cards
+   * GET /admin/providers/stats
+   */
+  getProviderStats: async () => {
+    return apiRequest<{
+      total: number;
+      active: number;
+      pending: number;
+      inactive: number;
+    }>("/admin/providers/stats");
+  },
+
+  /**
+   * Activate / Deactivate provider
+   * PATCH /admin/providers/{id}/status
+   */
+  
+    getResources: async () => {
+      return apiRequest<Array<{
+        id: string;
+        name: string;
+        capacity: number;
+        is_active: boolean;
+        owner_name: string;
+        owner_email: string;
+        created_at: string | null;
+      }>>("/admin/resources");
+    },
+  
+    updateResourceStatus: async (resourceId: string, isActive: boolean) => {
+      return apiRequest<{ message: string }>(
+        `/admin/resources/${resourceId}/status`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ is_active: isActive }),
+        }
+      );
+    },
+  updateProviderStatus: async (
+    providerId: string,
+    isActive: boolean
+  ) => {
+    return apiRequest<{ message: string }>(
+      `/admin/providers/${providerId}/status`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ is_active: isActive }),
+      }
+    );
+  },
+  getSummary: () =>
+    apiRequest("/admin/reports/transactions/summary"),
+
+  revenueByAppointment: () =>
+    apiRequest("/admin/reports/revenue-by-appointment"),
+
+  revenueByProvider: () =>
+    apiRequest("/admin/reports/revenue-by-provider"),
+
+  recentTransactions: () =>
+    apiRequest("/admin/reports/recent-transactions"),
+};
+

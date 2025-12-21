@@ -18,7 +18,7 @@ from app.routers import (
 )
 from app.models.role import Role
 from app.models.user_role import UserRole
-
+from app.routers import admin
 # Create tables
 Base.metadata.create_all(bind=engine)
 
@@ -50,3 +50,4 @@ app.include_router(cancel.router)
 app.include_router(appointment_question.router)
 app.include_router(appointment_answer.router)
 app.include_router(appointment_status.router)
+app.include_router(admin.router)

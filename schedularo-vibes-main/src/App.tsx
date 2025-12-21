@@ -11,7 +11,10 @@ import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import NotFound from "./pages/NotFound";
-
+import AdminUsers from "@/pages/admin/users";
+import AdminAppointments from "@/pages/admin/appointment";
+import AdminResources from "@/pages/admin/resource";
+import AdminReports from "@/pages/admin/reports";
 // Customer pages
 import CustomerDashboard from "./pages/customer/Dashboard";
 import CustomerDiscover from "./pages/customer/Discover";
@@ -32,7 +35,7 @@ import OrganizerSettings from "./pages/organizer/Settings";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/Dashboard";
-
+import AdminProviders from "@/pages/admin/serviceprovider";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -73,9 +76,11 @@ const App = () => (
 
             {/* Admin routes */}
             <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/users" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/roles" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute allowedRoles={["admin"]}><AdminUsers  /></ProtectedRoute>} />
+            <Route path="/admin/resources" element={<ProtectedRoute allowedRoles={["admin"]}><AdminResources /></ProtectedRoute>} />
+            <Route path="/admin/appointment" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAppointments /></ProtectedRoute>} />
+            <Route path="/admin/serviceprovider" element={<ProtectedRoute allowedRoles={["admin"]}><AdminProviders /></ProtectedRoute>} />
+            <Route path="/admin/reports" element={<ProtectedRoute allowedRoles={["admin"]}><AdminReports /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
 
             {/* Legacy route */}

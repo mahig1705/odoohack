@@ -66,11 +66,13 @@ def get_my_bookings(
 
 @router.get("/all", response_model=list[BookingResponse])
 def get_all_bookings(
-    current_user: User = Depends(require_roles("ORGANISER", "ADMIN")),
+    current_user: User = Depends(require_roles("ORGANISER")),
     db: Session = Depends(get_db)
 ):
     appointments = (
         db.query(Appointment)
+        .join(AppointmentType)
+        .filter(AppointmentType.created_by == current_user.id)
         .order_by(Appointment.created_at.desc())
         .all()
     )

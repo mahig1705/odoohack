@@ -63,6 +63,7 @@ def verify_otp(data: OTPVerifyRequest, db: Session = Depends(get_db)):
 
     if user_count == 1:
         # 👑 FIRST USER → ADMIN
+        
         admin_role = db.query(Role).filter(Role.name == "ADMIN").first()
         db.add(UserRole(user_id=user.id, role_id=admin_role.id))
     else:
