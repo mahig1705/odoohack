@@ -117,5 +117,3 @@ This repository does not include a project license file. Add a `LICENSE` file if
 For questions about deployment or to request assistance, please open an issue in this repository.
 
 ---
-
-*README created to provide a concise project overview and setup instructions. Add your demo link in the Demo section above.*
