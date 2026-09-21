@@ -6,6 +6,8 @@ def create_resource(db: Session, data, user_id):
     resource = Resource(
         name=data.name,
         capacity=data.capacity,
+        latitude=data.latitude,
+        longitude=data.longitude,
         created_by=user_id
     )
     db.add(resource)

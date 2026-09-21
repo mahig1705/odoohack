@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_ID: str | None = None
     RAZORPAY_KEY_SECRET: str | None = None
     RAZORPAY_WEBHOOK_SECRET: str | None = None
+    LLM_PROVIDER: str | None = None
+    LLM_MODEL: str | None = None
+    LLM_API_KEY: str | None = None
 
     class Config:
         # Prefer a project-level .env located at backend/.env (robust for different CWDs)
