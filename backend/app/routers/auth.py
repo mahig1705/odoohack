@@ -120,22 +120,6 @@ def verify_email(data: EmailVerifyRequest, db: Session = Depends(get_db)):
                 db.add(UserRole(user_id=user.id, role_id=role.id))
         db.commit()
 
-<<<<<<< HEAD
-
-    if user_count == 1:
-        # 👑 FIRST USER → ADMIN
-        
-        admin_role = db.query(Role).filter(Role.name == "ADMIN").first()
-        db.add(UserRole(user_id=user.id, role_id=admin_role.id))
-    else:
-        # 👤 ASSIGN REQUESTED ROLE
-        role_name = user.requested_role or "CUSTOMER"
-        role = db.query(Role).filter(Role.name == role_name).first()
-        db.add(UserRole(user_id=user.id, role_id=role.id))
-
-    db.commit()
-=======
->>>>>>> main
     return {"message": "Email verified successfully"}
 
 
