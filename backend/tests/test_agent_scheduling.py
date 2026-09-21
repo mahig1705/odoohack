@@ -25,6 +25,48 @@ def test_resource_create_schema_accepts_coordinates():
     assert resource.longitude == 77.2090
 
 
+def test_workflow_uses_db_session_in_live_graph(monkeypatch, sample_user_id):
+    observed = {}
+
+    def fake_lookup(db, service_name, context=None):
+        observed["lookup_db"] = db
+        return {"id": str(uuid4()), "name": "Haircut", "duration_minutes": 60}
+
+    def fake_find_slots(db, **kwargs):
+        observed["slots_db"] = db
+        return [{
+            "id": str(uuid4()),
+            "appointment_type_id": str(uuid4()),
+            "slot_date": "2026-09-22",
+            "start_time": "18:00:00",
+            "end_time": "19:00:00",
+            "status": "OPEN",
+            "booked_capacity": 0,
+            "max_capacity": 1,
+        }]
+
+    def fake_create_booking(db, **kwargs):
+        observed["booking_db"] = db
+        return {"appointment_id": str(uuid4()), "status": "BOOKED"}
+
+    monkeypatch.setattr("app.agents.scheduling.graph.lookup_appointment_type_for_request", fake_lookup)
+    monkeypatch.setattr("app.agents.scheduling.graph.find_slots_for_request", fake_find_slots)
+    monkeypatch.setattr("app.agents.scheduling.graph.create_booking_record", fake_create_booking)
+
+    state = build_initial_state(
+        "Book me a haircut tomorrow at 6 PM",
+        user_id=sample_user_id,
+        context={"appointment_type_name": "Haircut"},
+    )
+    db = object()
+    result = run_booking_workflow(state, db=db)
+
+    assert result["status"] == "confirmed"
+    assert observed["lookup_db"] is db
+    assert observed["slots_db"] is db
+    assert observed["booking_db"] is db
+
+
 def test_exact_slot_available(monkeypatch, sample_user_id):
     monkeypatch.setattr(
         "app.agents.scheduling.graph.lookup_appointment_type_for_request",

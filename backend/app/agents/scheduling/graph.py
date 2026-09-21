@@ -22,6 +22,17 @@ from app.agents.scheduling.tools import (
 
 logger = logging.getLogger(__name__)
 
+_DB_BY_THREAD: dict[str, Any] = {}
+
+
+def _resolve_db(state: SchedulingAgentState, fallback_db: Any = None):
+    thread_id = state.get("thread_id") or "schedularo-thread"
+    db = _DB_BY_THREAD.get(thread_id, fallback_db)
+    if db is None:
+        context = state.get("context") or {}
+        db = context.get("db")
+    return db
+
 
 class SchedulingAgentState(TypedDict, total=False):
     user_id: str | None
@@ -273,6 +284,7 @@ def route_by_intent(state: SchedulingAgentState):
 
 def handle_availability_lookup(state: SchedulingAgentState, db=None) -> SchedulingAgentState:
     context = state.get("context") or {}
+    db = _resolve_db(state, db)
     appointment_type = lookup_appointment_type_for_request(db, state.get("service_name"), context)
     if appointment_type:
         state["service_name"] = appointment_type.get("name") or state.get("service_name")
@@ -356,6 +368,8 @@ def validate_confirmation(state: SchedulingAgentState) -> SchedulingAgentState:
 
 
 def create_booking_node(state: SchedulingAgentState, db=None) -> SchedulingAgentState:
+    context = state.get("context") or {}
+    db = _resolve_db(state, db)
     slot_id = state.get("selected_slot_id")
     if not slot_id and state.get("recommended_slots"):
         slot_id = state["recommended_slots"][0].get("id")
@@ -372,11 +386,13 @@ def create_booking_node(state: SchedulingAgentState, db=None) -> SchedulingAgent
 
 
 def initiate_payment(state: SchedulingAgentState, db=None) -> SchedulingAgentState:
+    context = state.get("context") or {}
+    db = _resolve_db(state, db)
     if not state.get("payment_required"):
         state["payment_status"] = "not_required"
         return state
 
-    amount = float((state.get("context") or {}).get("amount") or 0)
+    amount = float(context.get("amount") or 0)
     order = create_payment_order(db, appointment_id=state.get("booking_id"), amount=amount)
     state["payment_order_id"] = order.get("order_id")
     state["payment_status"] = order.get("status")
@@ -386,6 +402,8 @@ def initiate_payment(state: SchedulingAgentState, db=None) -> SchedulingAgentSta
 
 
 def verify_payment(state: SchedulingAgentState, db=None) -> SchedulingAgentState:
+    context = state.get("context") or {}
+    db = _resolve_db(state, db)
     if not state.get("payment_verification"):
         state["payment_status"] = state.get("payment_status") or "not_required"
         state["status"] = "confirmed"
@@ -393,10 +411,10 @@ def verify_payment(state: SchedulingAgentState, db=None) -> SchedulingAgentState
 
     verification = verify_payment_order(
         db,
-        payment_id=(state.get("context") or {}).get("payment_id"),
-        razorpay_order_id=(state.get("context") or {}).get("razorpay_order_id"),
-        razorpay_payment_id=(state.get("context") or {}).get("razorpay_payment_id"),
-        razorpay_signature=(state.get("context") or {}).get("razorpay_signature"),
+        payment_id=context.get("payment_id"),
+        razorpay_order_id=context.get("razorpay_order_id"),
+        razorpay_payment_id=context.get("razorpay_payment_id"),
+        razorpay_signature=context.get("razorpay_signature"),
     )
     if not verification.get("success"):
         state["status"] = "error"
@@ -410,7 +428,9 @@ def verify_payment(state: SchedulingAgentState, db=None) -> SchedulingAgentState
 
 
 def validate_cancellation(state: SchedulingAgentState, db=None) -> SchedulingAgentState:
-    appointment_id = state.get("appointment_id") or (state.get("context") or {}).get("appointment_id")
+    context = state.get("context") or {}
+    db = _resolve_db(state, db)
+    appointment_id = state.get("appointment_id") or context.get("appointment_id")
     if not appointment_id:
         state["status"] = "needs_clarification"
         state["clarification_question"] = "Which appointment would you like to cancel?"
@@ -431,7 +451,9 @@ def validate_cancellation(state: SchedulingAgentState, db=None) -> SchedulingAge
 
 
 def validate_reschedule(state: SchedulingAgentState, db=None) -> SchedulingAgentState:
-    appointment_id = state.get("appointment_id") or (state.get("context") or {}).get("appointment_id")
+    context = state.get("context") or {}
+    db = _resolve_db(state, db)
+    appointment_id = state.get("appointment_id") or context.get("appointment_id")
     appointment = find_appointment_by_user(db, user_id=state.get("user_id"), appointment_id=appointment_id) if appointment_id else None
     if not appointment:
         state["status"] = "needs_clarification"
@@ -446,6 +468,8 @@ def validate_reschedule(state: SchedulingAgentState, db=None) -> SchedulingAgent
 
 
 def process_cancellation(state: SchedulingAgentState, db=None) -> SchedulingAgentState:
+    context = state.get("context") or {}
+    db = _resolve_db(state, db)
     if not state.get("user_confirmation"):
         state["status"] = "waiting_for_confirmation"
         return state
@@ -460,6 +484,8 @@ def process_cancellation(state: SchedulingAgentState, db=None) -> SchedulingAgen
 
 
 def process_reschedule(state: SchedulingAgentState, db=None) -> SchedulingAgentState:
+    context = state.get("context") or {}
+    db = _resolve_db(state, db)
     if not state.get("user_confirmation"):
         state["status"] = "waiting_for_confirmation"
         return state
@@ -544,15 +570,20 @@ def build_graph():
 def run_booking_workflow(state: SchedulingAgentState, db=None, thread_id: str | None = None):
     """Run the scheduling workflow with a memory-backed state graph and deterministic service calls."""
     state = {**state}
-    state["thread_id"] = thread_id or state.get("thread_id")
+    state["thread_id"] = thread_id or state.get("thread_id") or "schedularo-thread"
     if not state.get("user_id"):
         state["status"] = "error"
         state["error"] = "A valid user is required to book an appointment."
         return state
 
-    graph = build_graph()
-    config = {"configurable": {"thread_id": state.get("thread_id") or "schedularo-thread"}}
-    result = graph.invoke(state, config=config)
+    thread_key = state["thread_id"]
+    _DB_BY_THREAD[thread_key] = db
+    try:
+        graph = build_graph()
+        config = {"configurable": {"thread_id": thread_key}}
+        result = graph.invoke(state, config=config)
+    finally:
+        _DB_BY_THREAD.pop(thread_key, None)
 
     if result.get("status") == "booking_created":
         result["status"] = "confirmed"
