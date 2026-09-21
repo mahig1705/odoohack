@@ -409,8 +409,7 @@ export const appointmentQuestionApi = {
   },
 };
 
-<<<<<<< HEAD
-// ===========s====== ADMIN API =================
+// Admin API
 export const adminApi = {
   getStats: async () => {
     return apiRequest<{
@@ -418,37 +417,39 @@ export const adminApi = {
       total_organizers: number;
       total_bookings: number;
       total_appointment_types: number;
-    }>("/admin/stats");
+    }>('/admin/stats');
   },
-  // ================= ADMIN APPOINTMENTS =================
-getAppointmentTypes: async () => {
-  return apiRequest<Array<{
-    id: string;
-    name: string;
-    duration_minutes: number;
-    appointment_mode: string;
-    is_published: boolean;
-    created_by_name: string;
-  }>>("/admin/appointment-types");
-},
-getRecentUsers: async () => {
-  return apiRequest<Array<{
-    id: string;
-    full_name: string;
-    email: string;
-    status: string;
-    created_at: string;
-  }>>("/admin/recent-users");
-},
-getRecentProviders: async () => {
-  return apiRequest<Array<{
-    id: string;
-    name: string;
-    category: string;
-    status: string;
-    created_at: string;
-  }>>("/admin/recent-providers");
-},
+
+  getAppointmentTypes: async () => {
+    return apiRequest<Array<{
+      id: string;
+      name: string;
+      duration_minutes: number;
+      appointment_mode: string;
+      is_published: boolean;
+      created_by_name: string;
+    }>>('/admin/appointment-types');
+  },
+
+  getRecentUsers: async () => {
+    return apiRequest<Array<{
+      id: string;
+      full_name: string;
+      email: string;
+      status: string;
+      created_at: string;
+    }>>('/admin/recent-users');
+  },
+
+  getRecentProviders: async () => {
+    return apiRequest<Array<{
+      id: string;
+      name: string;
+      category: string;
+      status: string;
+      created_at: string;
+    }>>('/admin/recent-providers');
+  },
 
   getBookings: async () => {
     return apiRequest<Array<{
@@ -464,7 +465,7 @@ getRecentProviders: async () => {
       start_time: string;
       end_time: string;
       booked_by: string;
-    }>>("/admin/bookings");
+    }>>('/admin/bookings');
   },
 
   getUsers: async () => {
@@ -474,115 +475,91 @@ getRecentProviders: async () => {
       email: string;
       is_active: boolean;
       roles: string[];
-    }>>("/admin/users");
+    }>>('/admin/users');
   },
 
   updateUserStatus: async (userId: string, isActive: boolean) => {
     return apiRequest<{ message: string }>(`/admin/users/${userId}/status`, {
-      method: "PATCH",
+      method: 'PATCH',
       body: JSON.stringify({ is_active: isActive }),
     });
   },
 
   updateUserRole: async (userId: string, role: string) => {
     return apiRequest<{ message: string }>(`/admin/users/${userId}/role`, {
-      method: "PATCH",
+      method: 'PATCH',
       body: JSON.stringify({ role }),
     });
   },
+
   getProviders: async () => {
     return apiRequest<Array<{
       id: string;
       name: string;
       email: string;
-      status: "Active" | "Inactive";
+      status: 'Active' | 'Inactive';
       bookings: number;
       type: string;
       rating: number | null;
       location: string;
       created_at: string;
-    }>>("/admin/providers");
+    }>>('/admin/providers');
   },
 
-  /**
-   * Provider statistics cards
-   * GET /admin/providers/stats
-   */
   getProviderStats: async () => {
     return apiRequest<{
       total: number;
       active: number;
       pending: number;
       inactive: number;
-    }>("/admin/providers/stats");
+    }>('/admin/providers/stats');
   },
 
-  /**
-   * Activate / Deactivate provider
-   * PATCH /admin/providers/{id}/status
-   */
-  
-    getResources: async () => {
-      return apiRequest<Array<{
-        id: string;
-        name: string;
-        capacity: number;
-        is_active: boolean;
-        owner_name: string;
-        owner_email: string;
-        created_at: string | null;
-      }>>("/admin/resources");
-    },
-  
-    updateResourceStatus: async (resourceId: string, isActive: boolean) => {
-      return apiRequest<{ message: string }>(
-        `/admin/resources/${resourceId}/status`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ is_active: isActive }),
-        }
-      );
-    },
-  updateProviderStatus: async (
-    providerId: string,
-    isActive: boolean
-  ) => {
-    return apiRequest<{ message: string }>(
-      `/admin/providers/${providerId}/status`,
-      {
-        method: "PATCH",
-        body: JSON.stringify({ is_active: isActive }),
-      }
-    );
+  getResources: async () => {
+    return apiRequest<Array<{
+      id: string;
+      name: string;
+      capacity: number;
+      is_active: boolean;
+      owner_name: string;
+      owner_email: string;
+      created_at: string | null;
+    }>>('/admin/resources');
   },
-  getSummary: () =>
-    apiRequest("/admin/reports/transactions/summary"),
 
-  revenueByAppointment: () =>
-    apiRequest("/admin/reports/revenue-by-appointment"),
+  updateResourceStatus: async (resourceId: string, isActive: boolean) => {
+    return apiRequest<{ message: string }>(`/admin/resources/${resourceId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ is_active: isActive }),
+    });
+  },
 
-  revenueByProvider: () =>
-    apiRequest("/admin/reports/revenue-by-provider"),
+  updateProviderStatus: async (providerId: string, isActive: boolean) => {
+    return apiRequest<{ message: string }>(`/admin/providers/${providerId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ is_active: isActive }),
+    });
+  },
 
-  recentTransactions: () =>
-    apiRequest("/admin/reports/recent-transactions"),
-=======
+  getSummary: () => apiRequest('/admin/reports/transactions/summary'),
+  revenueByAppointment: () => apiRequest('/admin/reports/revenue-by-appointment'),
+  revenueByProvider: () => apiRequest('/admin/reports/revenue-by-provider'),
+  recentTransactions: () => apiRequest('/admin/reports/recent-transactions'),
+};
+
 // Payment API
 export const paymentApi = {
-  // Legacy create (keeps existing behavior for offline/manual payments)
   create: async (data: {
     appointment_id: string;
     amount: number;
     payment_method: string;
   }) => {
-    return apiRequest<{
-      payment_id: string;
-      status: string;
-    }>("/payments", {
-      method: "POST",
+    return apiRequest<{ payment_id: string; status: string }>('/payments', {
+      method: 'POST',
       body: JSON.stringify(data),
     });
   },
+
   createOrder: async (data: { appointment_id: string; amount: number; currency?: string }) => {
     return apiRequest<{
       payment_id: string;
@@ -590,37 +567,15 @@ export const paymentApi = {
       amount: number;
       currency: string;
       key_id: string;
-    }>("/payments/create-order", {
-      method: "POST",
+    }>('/payments/create-order', {
+      method: 'POST',
       body: JSON.stringify(data),
     });
   },
 
   verify: async (data: { payment_id: string; razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
-    return apiRequest<{ success: boolean }>("/payments/verify", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-  },
-
-  // Create an online order (Razorpay). Returns our payment record id and razorpay order id + key id.
-  createOrder: async (data: { appointment_id: string; amount: number; currency?: string }) => {
-    return apiRequest<{
-      payment_id: string;
-      order_id: string;
-      amount: number;
-      currency: string;
-      key_id: string;
-    }>("/payments/create-order", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-  },
-
-  // Verify payment after Razorpay checkout
-  verify: async (data: { payment_id: string; razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
-    return apiRequest<{ success: boolean; payment_id: string }>("/payments/verify", {
-      method: "POST",
+    return apiRequest<{ success: boolean; payment_id: string }>('/payments/verify', {
+      method: 'POST',
       body: JSON.stringify(data),
     });
   },
@@ -633,8 +588,8 @@ export const appointmentAnswerApi = {
     question_id: string;
     answer: string;
   }) => {
-    return apiRequest<{ message: string }>("/appointment-answers", {
-      method: "POST",
+    return apiRequest<{ message: string }>('/appointment-answers', {
+      method: 'POST',
       body: JSON.stringify(data),
     });
   },
@@ -652,6 +607,5 @@ export const appointmentStatusApi = {
       changed_by: string;
     }>>(`/appointment-status/${appointmentId}`);
   },
->>>>>>> main
 };
 
